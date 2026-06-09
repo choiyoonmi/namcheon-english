@@ -179,7 +179,7 @@ def analyze_exam():
         return jsonify({"error": str(e)}), 500
 
 def analyze_pdf_with_vision(pdf_base64_array, grade, round_num, difficulty, select_count=5):
-    """Claude Vision API를 사용해서 여러 이미지 분석"""
+    """Claude Vision API를 사용해서 여러 이미지 분석 (단순화 버전)"""
     try:
         if not anthropic_client:
             return jsonify({"error": "API Key not configured"}), 500
@@ -187,33 +187,20 @@ def analyze_pdf_with_vision(pdf_base64_array, grade, round_num, difficulty, sele
         if not pdf_base64_array:
             return jsonify({"error": "Image data required"}), 400
 
-        # 이미지 개수 제한 (너무 많으면 API 제한)
-        if len(pdf_base64_array) > 3:
-            pdf_base64_array = pdf_base64_array[:3]
+        # 이미지 개수 제한 (최대 2개)
+        if len(pdf_base64_array) > 2:
+            pdf_base64_array = pdf_base64_array[:2]
 
-        prompt = f"""이 사진들은 중학교 {grade}학년 영어 기출문제입니다.
+        prompt = f"""이 사진은 중학교 {grade}학년 영어 기출문제입니다.
 
-JSON 형식으로만 응답하세요. 마크다운이나 설명은 하지 마세요.
-
-총 {select_count + 5}개 문제를 생성하세요:
-- 선택 문제(객관식): {select_count}개 (각 4지선다, 점수 3점)
-- 서술형 문제: 5개 (점수 3~4점)
-
-각 선택 문제는 4개 선택지를 가져야 합니다.
-각 서술형 문제는 정답과 해설을 포함해야 합니다.
-
-응답은 JSON만 (마크다운 블록 없음):
+JSON만 응답하세요:
 {{
   "grade": "{grade}",
   "round": "{round_num}",
   "difficulty": "{difficulty}",
   "questions": [
-    {{"id": 1, "type": "mc", "question": "선택문제1내용", "options": ["①선택지1", "②선택지2", "③선택지3", "④선택지4"], "answer": 1, "points": 3, "topic": "어휘"}},
-    {{"id": 2, "type": "mc", "question": "선택문제2내용", "options": ["①선택지1", "②선택지2", "③선택지3", "④선택지4"], "answer": 2, "points": 3, "topic": "문법"}},
-    ...{select_count}개의 선택 문제...,
-    {{"id": {select_count + 1}, "type": "essay", "question": "서술형1내용", "answer": "정답텍스트", "points": 3, "explanation": "해설", "topic": "관용표현"}},
-    {{"id": {select_count + 2}, "type": "essay", "question": "서술형2내용", "answer": "정답텍스트", "points": 3, "explanation": "해설", "topic": "문법"}},
-    ...5개의 서술형 문제...
+    {{"id": 1, "type": "mc", "question": "문제1", "options": ["①", "②", "③", "④"], "answer": 1, "points": 3, "topic": "유형"}},
+    {{"id": 2, "type": "essay", "question": "서술형1", "answer": "정답", "points": 3, "explanation": "해설", "topic": "유형"}}
   ]
 }}"""
 
