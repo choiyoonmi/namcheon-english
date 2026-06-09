@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>남천중학교 영어 예상문제</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo-wrap">
+      <div class="logo-icon">H</div>
+      <div>
+        <h1>남천중학교</h1>
+        <p>영어과 예상기출문제</p>
+      </div>
+    </div>
+    <button class="btn-print" onclick="window.print()">🖨️ 인쇄</button>
+  </div>
+</header>
+
+<main>
+  <!-- 선택 패널 -->
+  <section class="selector-panel no-print">
+    <div class="selector-row">
+      <div class="selector-group">
+        <label>학년 선택</label>
+        <div class="btn-group" id="gradeGroup">
+          <button class="grade-btn active" data-grade="2">2학년</button>
+          <button class="grade-btn" data-grade="3">3학년</button>
+        </div>
+      </div>
+      <div class="selector-group">
+        <label>회차 선택</label>
+        <div class="btn-group" id="roundGroup">
+          <button class="round-btn active" data-round="1">1회</button>
+          <button class="round-btn" data-round="2">2회</button>
+          <button class="round-btn" data-round="3">3회</button>
+          <button class="round-btn" data-round="4">4회</button>
+          <button class="round-btn" data-round="5">5회</button>
+        </div>
+      </div>
+    </div>
+    <div class="action-row">
+      <button class="btn-load" id="loadBtn" onclick="loadQuestions()">문제 불러오기</button>
+      <button class="btn-answer" id="toggleAnswerBtn" onclick="toggleAnswers()" style="display:none">정답 보기</button>
+    </div>
+  </section>
+
+  <!-- 문제지 헤더 (인쇄용) -->
+  <div class="exam-header print-only" id="examHeader" style="display:none">
+    <h2 id="examTitle"></h2>
+    <div class="exam-meta">
+      <span>남천중학교</span>
+      <span id="examSubtitle"></span>
+      <span>총 24문항</span>
+    </div>
+    <div class="exam-instructions">
+      ※ 각 문항을 읽고 답을 선택하거나 작성하시오. 배점은 각 문항에 표시되어 있습니다.
+    </div>
+  </div>
+
+  <!-- 로딩 -->
+  <div class="loading" id="loading" style="display:none">
+    <div class="spinner"></div>
+    <p>문제를 불러오는 중...</p>
+  </div>
+
+  <!-- 문제 목록 -->
+  <div class="questions-wrap" id="questionsWrap"></div>
+
+  <!-- 정답지 (숨김) -->
+  <div class="answer-sheet" id="answerSheet" style="display:none">
+    <h3>📋 정답표</h3>
+    <div class="answer-grid" id="answerGrid"></div>
+  </div>
+
+  <!-- 빈 상태 -->
+  <div class="empty-state" id="emptyState">
+    <div class="empty-icon">📝</div>
+    <p>위에서 학년과 회차를 선택한 후<br>「문제 불러오기」 버튼을 눌러주세요.</p>
+  </div>
+</main>
+
+<footer class="no-print">
+  <p>© 2026 남천중학교 영어과 예상기출문제 | 본 자료는 학습 목적으로만 사용하십시오.</p>
+</footer>
+
+<script src="/static/script.js"></script>
+</body>
+</html>
