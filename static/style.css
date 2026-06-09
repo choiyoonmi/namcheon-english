@@ -338,96 +338,176 @@ footer {
 @media print {
   .no-print { display: none !important; }
   .print-only { display: block !important; }
-  body { background: white; font-size: 10pt; line-height: 1.3; }
-  header { display: none; }
-  main { padding: 8px; max-width: 100%; margin: 0; }
+  body { background: white; font-size: 10pt; line-height: 1.3; margin: 0; padding: 0; }
+  header { display: none !important; }
+  main { padding: 0; max-width: 100%; margin: 0; }
+
+  /* 인쇄용 페이지 레이아웃 */
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+
+  /* 시험지 헤더는 페이지 상단 고정 */
+  .exam-header {
+    margin-bottom: 12px;
+    padding: 10px 0;
+    border-bottom: 2px solid #333;
+    page-break-after: avoid;
+  }
+  .exam-header h2 { font-size: 13pt; font-weight: bold; margin-bottom: 4px; }
+  .exam-meta { font-size: 9pt; gap: 12px; margin-bottom: 4px; }
+  .exam-instructions { font-size: 8pt; padding-top: 6px; }
 
   /* 2단 구성 */
   .questions-wrap {
     column-count: 2;
-    column-gap: 12px;
-    column-rule: 1px solid #ddd;
+    column-gap: 10px;
+    column-fill: auto;
+    width: 100%;
   }
 
-  .exam-header {
+  .round-title {
     column-span: all;
-    margin-bottom: 12px;
-    padding: 10px 8px;
-    border: 1px solid #333;
+    margin-top: 8px;
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #ddd;
+    page-break-after: avoid;
   }
-  .exam-header h2 { font-size: 14pt; margin-bottom: 6px; }
-  .exam-meta { font-size: 9pt; gap: 16px; }
-  .exam-instructions { font-size: 9pt; padding-top: 8px; }
+  .round-title h2 {
+    font-size: 10pt;
+    margin: 0;
+    font-weight: 700;
+  }
 
   .question-card {
     box-shadow: none !important;
-    border: 1px solid #999 !important;
+    border: 1px solid #ccc !important;
     break-inside: avoid;
-    margin-bottom: 6px;
-    padding: 8px 10px !important;
     page-break-inside: avoid;
+    margin-bottom: 6px;
+    padding: 8px !important;
+    background: white;
+    font-size: 9pt;
   }
 
   .q-header {
-    margin-bottom: 6px;
-    gap: 6px;
+    display: flex;
+    align-items: flex-start;
+    gap: 5px;
+    margin-bottom: 5px;
   }
   .q-num {
-    width: 22px;
-    height: 22px;
-    font-size: 10pt;
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    background: #333;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8pt;
+    font-weight: bold;
   }
-  .q-text { font-size: 10pt; line-height: 1.4; }
-  .q-points { font-size: 8pt; }
+  .q-text {
+    font-size: 9pt;
+    line-height: 1.3;
+    flex: 1;
+    font-weight: 600;
+  }
+  .q-points {
+    font-size: 7pt;
+    color: #666;
+    white-space: nowrap;
+  }
 
   .q-passage {
-    background: white !important;
+    background: #f9f9f9 !important;
     border-left: 2px solid #333 !important;
     padding: 6px 8px !important;
-    margin-bottom: 8px;
-    font-size: 9pt;
-    line-height: 1.5;
+    margin: 5px 0 6px 0;
+    font-size: 8pt;
+    line-height: 1.4;
+    color: #333;
   }
 
   .q-options {
-    gap: 4px;
+    gap: 3px;
+    margin: 0;
   }
   .q-options li {
-    padding: 5px 8px !important;
+    display: flex;
+    align-items: flex-start;
+    gap: 5px;
+    padding: 4px 6px !important;
     border: 0.5px solid #999 !important;
-    font-size: 9pt;
-    line-height: 1.3;
+    font-size: 8pt;
+    line-height: 1.25;
     margin-bottom: 2px;
+    background: white;
   }
-  .option-num { font-size: 9pt; min-width: 14px; }
+  .option-num {
+    font-weight: 700;
+    color: #666;
+    min-width: 12px;
+    flex-shrink: 0;
+    font-size: 8pt;
+  }
 
   .q-options li.correct-answer {
     background: white !important;
     border-color: #999 !important;
   }
-  .q-options li.correct-answer .option-num { color: inherit !important; }
+  .q-options li.correct-answer .option-num {
+    color: inherit !important;
+  }
 
   .q-explanation { display: none !important; }
+
+  /* 정답지 */
   .answer-sheet {
-    column-span: all;
+    page-break-before: always;
     display: block !important;
     margin-top: 12px;
-    padding: 10px 8px;
-    border: 1px solid #999;
+    padding: 10px 0;
+    border-top: 2px solid #333;
+    break-inside: avoid;
   }
-  .answer-sheet h3 { font-size: 12pt; margin-bottom: 8px; }
+  .answer-sheet h3 {
+    font-size: 11pt;
+    font-weight: bold;
+    margin-bottom: 8px;
+    margin-top: 0;
+  }
   .answer-grid {
-    grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)) !important;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
     gap: 4px;
+    width: 100%;
   }
   .answer-item {
-    padding: 4px !important;
-    font-size: 9pt;
+    background: #333;
+    color: white;
+    border-radius: 4px;
+    padding: 4px;
+    text-align: center;
+    font-size: 8pt;
   }
-  .answer-item .a-num { font-size: 8pt; }
-  .answer-item .a-val { font-size: 12pt; }
+  .answer-item .a-num {
+    opacity: 0.7;
+    font-size: 7pt;
+    margin-bottom: 2px;
+  }
+  .answer-item .a-val {
+    font-weight: 700;
+    font-size: 11pt;
+  }
 
-  footer { display: none; }
+  footer { display: none !important; }
+  .selector-panel { display: none !important; }
+  .ai-section { display: none !important; }
 }
 
 .print-only { display: none; }
