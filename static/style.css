@@ -338,22 +338,95 @@ footer {
 @media print {
   .no-print { display: none !important; }
   .print-only { display: block !important; }
-  body { background: white; font-size: 12pt; }
+  body { background: white; font-size: 10pt; line-height: 1.3; }
   header { display: none; }
-  main { padding: 0; max-width: 100%; }
-  .question-card {
-    box-shadow: none;
-    border: 1px solid #ccc;
-    break-inside: avoid;
-    margin-bottom: 8px;
+  main { padding: 8px; max-width: 100%; margin: 0; }
+
+  /* 2단 구성 */
+  .questions-wrap {
+    column-count: 2;
+    column-gap: 12px;
+    column-rule: 1px solid #ddd;
   }
+
+  .exam-header {
+    column-span: all;
+    margin-bottom: 12px;
+    padding: 10px 8px;
+    border: 1px solid #333;
+  }
+  .exam-header h2 { font-size: 14pt; margin-bottom: 6px; }
+  .exam-meta { font-size: 9pt; gap: 16px; }
+  .exam-instructions { font-size: 9pt; padding-top: 8px; }
+
+  .question-card {
+    box-shadow: none !important;
+    border: 1px solid #999 !important;
+    break-inside: avoid;
+    margin-bottom: 6px;
+    padding: 8px 10px !important;
+    page-break-inside: avoid;
+  }
+
+  .q-header {
+    margin-bottom: 6px;
+    gap: 6px;
+  }
+  .q-num {
+    width: 22px;
+    height: 22px;
+    font-size: 10pt;
+  }
+  .q-text { font-size: 10pt; line-height: 1.4; }
+  .q-points { font-size: 8pt; }
+
+  .q-passage {
+    background: white !important;
+    border-left: 2px solid #333 !important;
+    padding: 6px 8px !important;
+    margin-bottom: 8px;
+    font-size: 9pt;
+    line-height: 1.5;
+  }
+
+  .q-options {
+    gap: 4px;
+  }
+  .q-options li {
+    padding: 5px 8px !important;
+    border: 0.5px solid #999 !important;
+    font-size: 9pt;
+    line-height: 1.3;
+    margin-bottom: 2px;
+  }
+  .option-num { font-size: 9pt; min-width: 14px; }
+
   .q-options li.correct-answer {
     background: white !important;
-    border-color: #ccc !important;
+    border-color: #999 !important;
   }
   .q-options li.correct-answer .option-num { color: inherit !important; }
+
   .q-explanation { display: none !important; }
-  .answer-sheet { display: none !important; }
+  .answer-sheet {
+    column-span: all;
+    display: block !important;
+    margin-top: 12px;
+    padding: 10px 8px;
+    border: 1px solid #999;
+  }
+  .answer-sheet h3 { font-size: 12pt; margin-bottom: 8px; }
+  .answer-grid {
+    grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)) !important;
+    gap: 4px;
+  }
+  .answer-item {
+    padding: 4px !important;
+    font-size: 9pt;
+  }
+  .answer-item .a-num { font-size: 8pt; }
+  .answer-item .a-val { font-size: 12pt; }
+
   footer { display: none; }
 }
 
