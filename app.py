@@ -13,7 +13,7 @@ QUESTIONS = {
 }
 
 # AI 서버 설정
-AI_SERVER_URL = os.environ.get("AI_SERVER_URL", "http://localhost:3000")
+AI_SERVER_URL = os.environ.get("AI_SERVER_URL") or "https://namcheon-ai-server.onrender.com"
 
 @app.route("/")
 def index():
