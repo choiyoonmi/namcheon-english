@@ -386,3 +386,21 @@ function downloadQuestions() {
   link.download = `예상문제_${new Date().getTime()}.txt`;
   link.click();
 }
+
+function resetAiSection() {
+  // AI 섹션 초기화
+  extractedPdfText = "";
+  document.getElementById("pdfFile").value = "";
+  document.getElementById("fileName").textContent = "선택된 파일 없음";
+  document.getElementById("fileProgress").style.display = "none";
+  document.getElementById("questionsWrap").innerHTML = "";
+  document.getElementById("answerSheet").style.display = "none";
+
+  // UI 초기화
+  document.getElementById("aiLoading").style.display = "none";
+  document.getElementById("aiResult").style.display = "none";
+  document.getElementById("aiError").style.display = "none";
+
+  // 페이지 상단으로 스크롤
+  document.getElementById("aiSection").scrollIntoView({ behavior: "smooth" });
+}

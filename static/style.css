@@ -621,6 +621,22 @@ footer {
   background: var(--gold-light);
 }
 
+.btn-back {
+  background: #e8eaf6;
+  color: var(--navy);
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-back:hover {
+  background: #c5cae9;
+}
+
 .result-info {
   display: flex;
   align-items: center;
