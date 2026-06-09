@@ -144,8 +144,44 @@ async function analyzeExamPdf() {
 }
 
 function displayAnalysisResult(result) {
-  const output = document.getElementById("analysisOutput");
-  output.textContent = JSON.stringify(result, null, 2);
+  // 분석 결과를 문제지 형식으로 변환해서 표시
+  if (!result.questions || result.questions.length === 0) {
+    showAnalysisError("분석 결과에 문제가 없습니다.");
+    return;
+  }
+
+  // questionsData에 결과 저장
+  questionsData = result.questions.map((q, idx) => ({
+    id: q.id || (idx + 1),
+    type: q.type || "essay",
+    question: q.question || "",
+    answer: q.answer || "",
+    explanation: q.explanation || "",
+    points: q.points || 3,
+    topic: q.topic || ""
+  }));
+
+  // 문제지 헤더 설정
+  currentGrade = result.grade || "2";
+  currentRound = result.round || "1";
+  document.getElementById("examTitle").textContent = `${currentGrade}학년 기출문제 분석 (${currentRound}회차)`;
+  document.getElementById("examSubtitle").textContent = `난이도: ${result.difficulty || "보통"}`;
+
+  // 문제지 표시
+  displayQuestions();
+
+  // 분석 섹션 숨기고 문제지 표시
+  document.getElementById("analysisSection").style.display = "none";
+  document.getElementById("analysisLoading").style.display = "none";
+  document.getElementById("analysisResult").style.display = "none";
+  document.getElementById("analysisError").style.display = "none";
+
+  // 문제지 관련 UI 표시
+  document.getElementById("examHeader").style.display = "block";
+  document.getElementById("questionsWrap").style.display = "block";
+  document.getElementById("emptyState").style.display = "none";
+  document.getElementById("toggleAnswerBtn").style.display = "inline-block";
+  document.getElementById("resetBtn").style.display = "inline-block";
 }
 
 function copyAnalysisResult() {
@@ -159,12 +195,25 @@ function copyAnalysisResult() {
 
 function resetAnalysis() {
   extractedExamPdfText = "";
+  examImageFiles = [];
   document.getElementById("examPdfFile").value = "";
-  document.getElementById("examFileName").textContent = "선택된 파일 없음";
+  document.getElementById("examFileName").style.display = "none";
   document.getElementById("examFileProgress").style.display = "none";
   document.getElementById("analysisLoading").style.display = "none";
   document.getElementById("analysisResult").style.display = "none";
   document.getElementById("analysisError").style.display = "none";
+
+  // 문제지 숨기기
+  document.getElementById("examHeader").style.display = "none";
+  document.getElementById("questionsWrap").innerHTML = "";
+  document.getElementById("questionsWrap").style.display = "none";
+  document.getElementById("emptyState").style.display = "block";
+  document.getElementById("toggleAnswerBtn").style.display = "none";
+  document.getElementById("resetBtn").style.display = "none";
+  document.getElementById("answerSheet").style.display = "none";
+
+  // 분석 섹션 다시 표시
+  document.getElementById("analysisSection").style.display = "block";
   document.getElementById("analysisSection").scrollIntoView({ behavior: "smooth" });
 }
 
