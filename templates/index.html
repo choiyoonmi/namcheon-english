@@ -82,6 +82,71 @@
     <div class="empty-icon">📝</div>
     <p>위에서 학년과 회차를 선택한 후<br>「문제 불러오기」 버튼을 눌러주세요.</p>
   </div>
+
+  <!-- AI 문제 생성 섹션 -->
+  <section class="ai-section no-print" id="aiSection" style="display:none; margin-top: 32px;">
+    <div class="ai-panel">
+      <h3>🤖 AI 문제 생성 (시험범위 PDF)</h3>
+      <p>새로운 시험범위 교과서 텍스트를 입력하면 자동으로 문제를 생성합니다.</p>
+
+      <div class="ai-form">
+        <div class="form-group">
+          <label>교과서 텍스트 (PDF에서 복사)</label>
+          <textarea id="pdfText" placeholder="교과서 텍스트를 여기에 붙여넣으세요..." rows="8"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>학년</label>
+            <select id="aiGrade">
+              <option value="2">2학년</option>
+              <option value="3">3학년</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>난이도</label>
+            <select id="aiDifficulty">
+              <option value="쉬움">쉬움</option>
+              <option value="보통" selected>보통</option>
+              <option value="어려움">어려움</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>회차 수</label>
+            <select id="aiRounds">
+              <option value="1">1회차</option>
+              <option value="2">2회차</option>
+              <option value="3">3회차</option>
+              <option value="5">5회차</option>
+            </select>
+          </div>
+        </div>
+
+        <button class="btn-generate" onclick="generateQuestions()">🚀 문제 생성</button>
+      </div>
+
+      <div id="aiLoading" style="display:none; text-align:center;">
+        <div class="spinner"></div>
+        <p>AI가 문제를 생성 중입니다... (1-3분 소요)</p>
+      </div>
+
+      <div id="aiResult" style="display:none;">
+        <div class="result-info">
+          <span>✅ 문제 생성 완료</span>
+          <button class="btn-print" onclick="window.print()">🖨️ 인쇄</button>
+          <button class="btn-download" onclick="downloadQuestions()">⬇️ 다운로드</button>
+        </div>
+      </div>
+
+      <div id="aiError" style="display:none;">
+        <div class="error-message">
+          ⚠️ <span id="errorText"></span>
+        </div>
+      </div>
+    </div>
+  </section>
 </main>
 
 <footer class="no-print">

@@ -83,6 +83,35 @@ def ai_generate():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route("/api/ai/generate-batch", methods=["POST"])
+def ai_generate_batch():
+    try:
+        data = request.json
+        pdf_text = data.get("pdfText", "").strip()
+
+        if not pdf_text:
+            return jsonify({"error": "PDF text required"}), 400
+
+        response = requests.post(
+            f"{AI_SERVER_URL}/api/generate-batch",
+            json={
+                "pdfText": pdf_text,
+                "grade": data.get("grade", "2"),
+                "rounds": data.get("rounds", 1),
+                "difficulty": data.get("difficulty", "보통")
+            },
+            timeout=180
+        )
+        response.raise_for_status()
+        return jsonify(response.json())
+
+    except requests.ConnectionError:
+        return jsonify({"error": "AI Server not available"}), 503
+    except requests.Timeout:
+        return jsonify({"error": "AI Server timeout (문제 생성이 오래 걸리고 있습니다)"}), 504
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route("/api/ai/health")
 def ai_health():
     try:
