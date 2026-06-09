@@ -9,8 +9,7 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 app.use(express.json({ limit: '50mb' }));
 app.use(cors());
 
-const SYSTEM_PROMPT = `
-너는 한국 중·고등학교 영어 내신 시험 전문 출제 AI다.
+const SYSTEM_PROMPT = `너는 한국 중·고등학교 영어 내신 시험 전문 출제 AI다.
 너는 실제 학교 시험지와 동일한 수준의 난이도와 형식을 갖춘 문제를 반드시 출제해야 한다.
 
 [출제의 핵심 원칙 - 반드시 준수]
@@ -51,34 +50,30 @@ const SYSTEM_PROMPT = `
 - 문법/어휘 요소를 자연스럽게 포함
 
 [JSON 응답 형식 - 필수]
-마크다운 코드 블럭(\\`\\`\\`) 절대 금지.
-{ 에서 } 까지 순수 JSON만 응답.
+마크다운 코드블록 절대 금지. 순수 JSON만 응답.
 
-예시:
+응답 예시:
 {
   "analysis": {
-    "passages": ["Passage Title 1", "Passage Title 2"],
-    "grammar_points": ["to부정사", "관계대명사"],
+    "passages": ["지문 제목"],
+    "grammar_points": ["to부정사"],
     "idioms": ["표현 목록"],
-    "has_dialogue": true,
-    "difficulty_level": "중상"
+    "has_dialogue": true
   },
   "questions": [
     {
       "id": 1,
       "type": "독해·내용일치",
       "passage_title": "지문 제목",
-      "passage": "전체 지문 내용 (완전한 문단)",
-      "question": "다음 글의 내용과 일치하는 것은?",
-      "choices": ["①원문표현을활용한길이있는선택지내용", "②두번째선택지내용", ...],
+      "passage": "전체 지문",
+      "question": "질문",
+      "choices": ["①...", "②...", "③...", "④...", "⑤..."],
       "answer": 2,
       "points": 3,
-      "explanation": "정답 근거 + 각 오답이 왜 틀렸는지"
-    },
-    ...
+      "explanation": "해설"
+    }
   ]
-}
-`;
+}`;
 
 function buildUserPrompt(pdfText, options) {
   const {
@@ -96,8 +91,7 @@ function buildUserPrompt(pdfText, options) {
     '어려움': '3점 8문항 + 4점 10문항 + 서논술형 6문항 = 100점'
   };
 
-  return `
-[출제 요청]
+  return `[출제 요청]
 ${grade}학년 영어 ${totalQ}문항 / 난이도: ${difficulty} / ${round}회차
 
 [배점 구성]
@@ -133,16 +127,13 @@ ${diffMap[difficulty]}
 ${pdfText.substring(0, 6000)}
 
 [응답 형식]
-JSON만 응답. 마크다운 블럭 금지.
-`;
+JSON만 응답. 마크다운 블록 금지.`;
 }
 
-// Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'namcheon-ai-server' });
 });
 
-// Main API: Generate questions from PDF text
 app.post('/api/generate', async (req, res) => {
   try {
     const { pdfText, options = {} } = req.body;
@@ -169,10 +160,8 @@ app.post('/api/generate', async (req, res) => {
 
     const responseText = message.content[0].type === 'text' ? message.content[0].text : '';
 
-    // Parse JSON response
     let parsedResponse;
     try {
-      // Remove markdown code blocks if present
       let cleanText = responseText.trim();
       if (cleanText.startsWith('```json')) {
         cleanText = cleanText.replace(/^```json\n?/, '').replace(/\n?```$/, '');
@@ -200,7 +189,6 @@ app.post('/api/generate', async (req, res) => {
   }
 });
 
-// Batch generate: Multiple rounds
 app.post('/api/generate-batch', async (req, res) => {
   try {
     const { pdfText, rounds = 1, difficulty = '보통', grade = '2' } = req.body;
@@ -243,7 +231,6 @@ app.post('/api/generate-batch', async (req, res) => {
       const parsed = JSON.parse(cleanText);
       results.push(parsed);
 
-      // Accumulate used items for next round
       if (parsed.analysis?.idioms) {
         usedIdioms.push(...parsed.analysis.idioms);
       }
@@ -251,7 +238,6 @@ app.post('/api/generate-batch', async (req, res) => {
         parsed.questions.forEach(q => usedTypes.push(q.type));
       }
 
-      // Rate limit between API calls
       if (round < rounds) {
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
@@ -268,7 +254,6 @@ app.post('/api/generate-batch', async (req, res) => {
   }
 });
 
-// Validate API Key
 app.get('/api/check-auth', (req, res) => {
   const hasKey = !!process.env.ANTHROPIC_API_KEY;
   res.json({
