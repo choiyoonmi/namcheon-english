@@ -64,9 +64,15 @@ async function handleExamPdfUpload(event) {
     }
 
     extractedExamPdfText = text;
-    fileName.textContent = "✅ " + file.name + " (" + totalPages + " 페이지 처리 완료)";
+    console.log("추출된 텍스트 길이:", text.length);
+    fileName.textContent = "✅ " + file.name + " (" + totalPages + " 페이지 처리 완료 / " + text.length + " 문자)";
     fileProgress.style.display = "none";
     analyzeBtn.disabled = false;
+
+    // 텍스트가 너무 짧으면 경고
+    if (text.length < 500) {
+      console.warn("경고: 추출된 텍스트가 너무 짧습니다. PDF가 이미지 기반일 수 있습니다.");
+    }
   } catch (error) {
     console.error("PDF 처리 오류:", error);
     fileName.textContent = "❌ 파일 처리 실패";
