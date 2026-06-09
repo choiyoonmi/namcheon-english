@@ -99,6 +99,7 @@ async function analyzeExamPdf() {
 
   const grade = document.getElementById("analysisTarget").value;
   const round = document.getElementById("analysisRound").value;
+  const selectCount = document.getElementById("analysisSelectCount").value;
   const difficulty = document.getElementById("analysisDifficulty").value;
 
   showAnalysisLoading();
@@ -125,6 +126,7 @@ async function analyzeExamPdf() {
         pdfBase64Array: imageBase64Array, // 여러 이미지 배열
         grade: grade,
         round: round,
+        selectCount: parseInt(selectCount), // 선택 문제 개수
         difficulty: difficulty
       })
     });

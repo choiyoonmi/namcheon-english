@@ -128,10 +128,11 @@ def analyze_exam():
         grade = data.get("grade", "2")
         round_num = data.get("round", "1")
         difficulty = data.get("difficulty", "보통")
+        select_count = data.get("selectCount", 5)
 
         # 여러 이미지 또는 단일 이미지를 Claude Vision으로 분석
         if pdf_base64_array:
-            return analyze_pdf_with_vision(pdf_base64_array, grade, round_num, difficulty)
+            return analyze_pdf_with_vision(pdf_base64_array, grade, round_num, difficulty, select_count)
 
         # PDF 텍스트가 충분하면 AI 서버로 전송
         if pdf_text and len(pdf_text) >= 200:
@@ -157,7 +158,7 @@ def analyze_exam():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-def analyze_pdf_with_vision(pdf_base64_array, grade, round_num, difficulty):
+def analyze_pdf_with_vision(pdf_base64_array, grade, round_num, difficulty, select_count=5):
     """Claude Vision API를 사용해서 여러 이미지 분석"""
     try:
         if not anthropic_client:
@@ -168,9 +169,17 @@ def analyze_pdf_with_vision(pdf_base64_array, grade, round_num, difficulty):
 
         prompt = f"""이 사진들은 중학교 {grade}학년 영어 기출문제입니다. (여러 페이지일 수 있습니다)
 
-회차 {round_num}의 필수 서술형 5문항을 생성해주세요.
+다음을 생성해주세요:
+1. 선택 문제 {select_count}개 (객관식, 4지선다)
+2. 서술형 5문항 (필수 유형 포함)
 
-[필수 유형]
+[선택 문제 유형]
+- 어휘 문제
+- 문법 문제
+- 독해/내용일치
+- 문맥 이해
+
+[서술형 필수 유형]
 1. 관용표현 영작 (3점)
 2. 조건영작 - 조건 3개 (4점)
 3. to부정사/수량 (3점)
@@ -185,6 +194,16 @@ def analyze_pdf_with_vision(pdf_base64_array, grade, round_num, difficulty):
   "questions": [
     {{
       "id": 번호,
+      "type": "mc",
+      "question": "문제",
+      "options": ["①", "②", "③", "④"],
+      "answer": 정답번호,
+      "points": 3,
+      "topic": "문제유형"
+    }},
+    ...선택 문제 {select_count}개...,
+    {{
+      "id": 번호,
       "type": "essay",
       "question": "문제",
       "answer": "정답",
@@ -192,6 +211,7 @@ def analyze_pdf_with_vision(pdf_base64_array, grade, round_num, difficulty):
       "explanation": "해설",
       "topic": "유형"
     }}
+    ...서술형 5문제...
   ]
 }}"""
 
