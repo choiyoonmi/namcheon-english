@@ -171,51 +171,21 @@ def analyze_pdf_with_vision(pdf_base64_array, grade, round_num, difficulty, sele
         if not pdf_base64_array:
             return jsonify({"error": "Image data required"}), 400
 
-        prompt = f"""이 사진들은 중학교 {grade}학년 영어 기출문제입니다. (여러 페이지일 수 있습니다)
+        prompt = f"""이 사진들은 중학교 {grade}학년 영어 기출문제입니다.
 
-다음을 생성해주세요:
-1. 선택 문제 {select_count}개 (객관식, 4지선다)
-2. 서술형 5문항 (필수 유형 포함)
+JSON 형식으로만 응답하세요. 마크다운이나 설명은 하지 마세요.
 
-[선택 문제 유형]
-- 어휘 문제
-- 문법 문제
-- 독해/내용일치
-- 문맥 이해
+선택 문제 {select_count}개 + 서술형 5문제를 생성하세요.
 
-[서술형 필수 유형]
-1. 관용표현 영작 (3점)
-2. 조건영작 - 조건 3개 (4점)
-3. to부정사/수량 (3점)
-4. 복합조건 (4점) x2
-
-[응답 형식]
-순수 JSON만 (마크다운 블록 없음):
+응답 형식 (JSON만):
 {{
   "grade": "{grade}",
   "round": "{round_num}",
   "difficulty": "{difficulty}",
   "questions": [
-    {{
-      "id": 번호,
-      "type": "mc",
-      "question": "문제",
-      "options": ["①", "②", "③", "④"],
-      "answer": 정답번호,
-      "points": 3,
-      "topic": "문제유형"
-    }},
-    ...선택 문제 {select_count}개...,
-    {{
-      "id": 번호,
-      "type": "essay",
-      "question": "문제",
-      "answer": "정답",
-      "points": 점수,
-      "explanation": "해설",
-      "topic": "유형"
-    }}
-    ...서술형 5문제...
+    {{"id": 1, "type": "mc", "question": "선택문제1", "options": ["①", "②", "③", "④"], "answer": 1, "points": 3, "topic": "어휘"}},
+    {{"id": 2, "type": "mc", "question": "선택문제2", "options": ["①", "②", "③", "④"], "answer": 2, "points": 3, "topic": "문법"}},
+    {{"id": {select_count + 1}, "type": "essay", "question": "서술형1", "answer": "정답", "points": 3, "explanation": "해설", "topic": "관용표현"}}
   ]
 }}"""
 
