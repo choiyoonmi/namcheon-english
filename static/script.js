@@ -378,6 +378,14 @@ function renderQuestions(questions) {
           </li>`
         ).join("") +
         `</ul>`;
+    } else if (q.type === "essay") {
+      optionsHtml = `
+        <div class="q-essay">
+          <div class="essay-label">서술형</div>
+          <div class="essay-answer">정답: ${escHtml(q.answer)}</div>
+          <div class="essay-topic">유형: ${escHtml(q.topic || "")}</div>
+        </div>
+      `;
     }
 
     const expHtml = q.explanation
