@@ -124,15 +124,19 @@ def analyze_exam():
     try:
         data = request.json
         pdf_text = data.get("pdfText", "").strip()
+
+        # 새 형식: images 배열 (base64, mediaType 포함) 또는 레거시: pdfBase64Array
+        images = data.get("images", [])
         pdf_base64_array = data.get("pdfBase64Array", [])
+
         grade = data.get("grade", "2")
         round_num = data.get("round", "1")
         difficulty = data.get("difficulty", "보통")
         select_count = data.get("selectCount", 5)
 
         # 여러 이미지 또는 단일 이미지를 Claude Vision으로 분석
-        if pdf_base64_array:
-            return analyze_pdf_with_vision(pdf_base64_array, grade, round_num, difficulty, select_count)
+        if images or pdf_base64_array:
+            return analyze_pdf_with_vision(images or pdf_base64_array, grade, round_num, difficulty, select_count)
 
         # PDF 텍스트가 충분하면 AI 서버로 전송
         if pdf_text and len(pdf_text) >= 200:
@@ -217,12 +221,21 @@ def analyze_pdf_with_vision(pdf_base64_array, grade, round_num, difficulty, sele
 
         # 모든 이미지를 메시지 content에 추가
         content = []
-        for base64_data in pdf_base64_array:
+        for item in pdf_base64_array:
+            # 새 형식 (이미지 형식 포함): {base64, mediaType}
+            if isinstance(item, dict):
+                base64_data = item.get("base64", "")
+                media_type = item.get("mediaType", "image/jpeg")
+            # 레거시 형식: 순수 base64 문자열
+            else:
+                base64_data = item
+                media_type = "image/jpeg"
+
             content.append({
                 "type": "image",
                 "source": {
                     "type": "base64",
-                    "media_type": "image/jpeg",
+                    "media_type": media_type,
                     "data": base64_data
                 }
             })

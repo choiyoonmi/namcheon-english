@@ -105,7 +105,7 @@ async function analyzeExamPdf() {
   showAnalysisLoading();
 
   try {
-    // 모든 파일을 Base64로 변환
+    // 모든 파일을 Base64로 변환 (파일 타입 포함)
     const imageBase64Array = [];
     for (let i = 0; i < examImageFiles.length; i++) {
       const file = examImageFiles[i];
@@ -115,7 +115,15 @@ async function analyzeExamPdf() {
       for (let j = 0; j < uint8Array.length; j++) {
         binary += String.fromCharCode(uint8Array[j]);
       }
-      imageBase64Array.push(btoa(binary));
+      const base64 = btoa(binary);
+
+      // 파일 형식 감지 (확장자로)
+      const mediaType = file.name.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
+
+      imageBase64Array.push({
+        base64: base64,
+        mediaType: mediaType
+      });
     }
 
     const response = await fetch("/api/analyze-exam", {
@@ -123,7 +131,7 @@ async function analyzeExamPdf() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         pdfText: extractedExamPdfText,
-        pdfBase64Array: imageBase64Array, // 여러 이미지 배열
+        images: imageBase64Array, // 여러 이미지 (형식 포함)
         grade: grade,
         round: round,
         selectCount: parseInt(selectCount), // 선택 문제 개수
