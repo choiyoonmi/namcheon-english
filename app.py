@@ -257,10 +257,25 @@ JSON만 응답하세요:
         })
 
     except json.JSONDecodeError:
-        return jsonify({
-            "error": "JSON parsing failed",
-            "raw_response": response_text[:500] if 'response_text' in locals() else "No response"
-        }), 500
+        # 마크다운 코드 블록 제거 시도
+        import re
+        cleaned = re.sub(r'^```json\n?', '', response_text)
+        cleaned = re.sub(r'\n?```$', '', cleaned)
+        try:
+            result = json.loads(cleaned)
+            return jsonify({
+                "success": True,
+                "grade": grade,
+                "round": round_num,
+                "difficulty": difficulty,
+                "questions": result.get("questions", []),
+                "message": f"OCR로 {len(pdf_base64_array)}개 이미지 분석 완료"
+            })
+        except:
+            return jsonify({
+                "error": "JSON parsing failed",
+                "raw_response": response_text[:500] if 'response_text' in locals() else "No response"
+            }), 500
     except Exception as e:
         return jsonify({"error": f"Vision analysis failed: {str(e)}"}), 500
 
