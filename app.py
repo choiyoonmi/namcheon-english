@@ -3,6 +3,7 @@ import random
 import os
 import requests
 import base64
+import json
 import anthropic
 from data.grade2_questions import GRADE2_QUESTIONS
 from data.grade3_questions import GRADE3_QUESTIONS
@@ -226,7 +227,6 @@ def analyze_pdf_with_vision(pdf_base64_array, grade, round_num, difficulty):
         response_text = message.content[0].text
 
         # JSON 파싱 및 정리
-        import json
         result = json.loads(response_text)
 
         return jsonify({
