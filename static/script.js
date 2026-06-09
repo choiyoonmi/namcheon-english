@@ -3,6 +3,11 @@ let currentRound = 1;
 let answersVisible = false;
 let questionsData = [];
 
+// 페이지 로드 시 AI 섹션 표시
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("aiSection").style.display = "block";
+});
+
 // Button selection
 document.querySelectorAll(".grade-btn").forEach(btn => {
   btn.addEventListener("click", () => {
