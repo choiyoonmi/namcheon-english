@@ -168,7 +168,7 @@ function displayAnalysisResult(result) {
   document.getElementById("examSubtitle").textContent = `난이도: ${result.difficulty || "보통"}`;
 
   // 문제지 표시
-  displayQuestions();
+  renderQuestions(questionsData);
 
   // 분석 섹션 숨기고 문제지 표시
   document.getElementById("analysisSection").style.display = "none";
