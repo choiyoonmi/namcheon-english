@@ -1,5 +1,7 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, request
 import random
+import os
+import requests
 from data.grade2_questions import GRADE2_QUESTIONS
 from data.grade3_questions import GRADE3_QUESTIONS
 
@@ -9,6 +11,9 @@ QUESTIONS = {
     "2": GRADE2_QUESTIONS,
     "3": GRADE3_QUESTIONS,
 }
+
+# AI 서버 설정
+AI_SERVER_URL = os.environ.get("AI_SERVER_URL", "http://localhost:3000")
 
 @app.route("/")
 def index():
@@ -22,7 +27,6 @@ def get_questions(grade, round_num):
         return jsonify({"error": "Round must be 1-5"}), 400
 
     qs = [q for q in QUESTIONS[grade] if q["round"] == round_num]
-    # Shuffle options order while keeping track of correct answer
     result = []
     for q in qs:
         item = dict(q)
@@ -44,7 +48,50 @@ def get_grades():
         {"value": "3", "label": "3학년 영어"},
     ])
 
+# ===== AI 기반 문제 생성 =====
+
+@app.route("/api/ai/generate", methods=["POST"])
+def ai_generate():
+    try:
+        data = request.json
+        pdf_text = data.get("pdfText", "").strip()
+
+        if not pdf_text:
+            return jsonify({"error": "PDF text required"}), 400
+
+        response = requests.post(
+            f"{AI_SERVER_URL}/api/generate",
+            json={
+                "pdfText": pdf_text,
+                "options": {
+                    "grade": data.get("grade", "2"),
+                    "round": data.get("round", 1),
+                    "difficulty": data.get("difficulty", "보통"),
+                    "usedIdioms": data.get("usedIdioms", []),
+                    "usedTypes": data.get("usedTypes", [])
+                }
+            },
+            timeout=30
+        )
+        response.raise_for_status()
+        return jsonify(response.json())
+
+    except requests.ConnectionError:
+        return jsonify({"error": "AI Server not available"}), 503
+    except requests.Timeout:
+        return jsonify({"error": "AI Server timeout"}), 504
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/ai/health")
+def ai_health():
+    try:
+        response = requests.get(f"{AI_SERVER_URL}/health", timeout=5)
+        response.raise_for_status()
+        return jsonify({"ai_server": "ok"})
+    except Exception as e:
+        return jsonify({"ai_server": "offline", "error": str(e)}), 503
+
 if __name__ == "__main__":
-    import os
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
