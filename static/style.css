@@ -566,6 +566,40 @@ footer {
   font-size: 14px;
 }
 
+.file-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-file-select {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  white-space: nowrap;
+}
+
+.btn-file-select:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+}
+
+.btn-file-select:active {
+  transform: translateY(0);
+}
+
+#fileName {
+  font-size: 13px;
+  color: var(--text-light);
+  word-break: break-all;
+}
+
 /* Responsive */
 @media (max-width: 600px) {
   .selector-row { flex-direction: column; gap: 16px; }

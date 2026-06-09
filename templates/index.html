@@ -26,10 +26,10 @@
   <section class="selector-panel no-print">
     <div class="selector-row">
       <div class="selector-group">
-        <label>학년 선택</label>
-        <div class="btn-group" id="gradeGroup">
-          <button class="grade-btn active" data-grade="2">2학년</button>
-          <button class="grade-btn" data-grade="3">3학년</button>
+        <label>시험 선택</label>
+        <div class="btn-group" id="examGroup">
+          <button class="exam-btn active" data-grade="2" data-term="1" data-type="중간">2학년 1학기 중간고사</button>
+          <button class="exam-btn" data-grade="3" data-term="1" data-type="중간">3학년 1학기 중간고사</button>
         </div>
       </div>
       <div class="selector-group">
@@ -86,21 +86,31 @@
   <!-- AI 문제 생성 섹션 -->
   <section class="ai-section no-print" id="aiSection" style="margin-top: 32px;">
     <div class="ai-panel">
-      <h3>🤖 AI 문제 생성 (시험범위 PDF)</h3>
-      <p>새로운 시험범위 교과서 텍스트를 입력하면 자동으로 문제를 생성합니다.</p>
+      <h3>🤖 AI 문제 생성 (신규 시험범위)</h3>
+      <p>새 교과서 PDF를 업로드하면 자동으로 예상 기출문제를 생성합니다.</p>
 
       <div class="ai-form">
         <div class="form-group">
-          <label>교과서 텍스트 (PDF에서 복사)</label>
-          <textarea id="pdfText" placeholder="교과서 텍스트를 여기에 붙여넣으세요..." rows="8"></textarea>
+          <label>교과서 PDF 파일</label>
+          <div class="file-input-wrapper">
+            <input type="file" id="pdfFile" accept=".pdf" style="display:none;">
+            <button class="btn-file-select" onclick="document.getElementById('pdfFile').click()">📄 PDF 선택</button>
+            <span id="fileName" style="margin-left: 12px; color: #666;">선택된 파일 없음</span>
+          </div>
+          <div id="fileProgress" style="display:none; margin-top: 8px;">
+            <div style="background: #ddd; height: 4px; border-radius: 2px;">
+              <div id="fileProgressBar" style="background: #667eea; height: 100%; width: 0%; transition: width 0.3s;"></div>
+            </div>
+            <p style="font-size: 12px; color: #666; margin-top: 4px;" id="fileStatus">처리 중...</p>
+          </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label>학년</label>
-            <select id="aiGrade">
-              <option value="2">2학년</option>
-              <option value="3">3학년</option>
+            <label>시험 선택</label>
+            <select id="aiExam">
+              <option value="2-1중간">2학년 1학기 중간</option>
+              <option value="3-1중간">3학년 1학기 중간</option>
             </select>
           </div>
 
@@ -124,7 +134,7 @@
           </div>
         </div>
 
-        <button class="btn-generate" onclick="generateQuestions()">🚀 문제 생성</button>
+        <button class="btn-generate" onclick="generateQuestions()" id="generateBtn">🚀 문제 생성</button>
       </div>
 
       <div id="aiLoading" style="display:none; text-align:center;">
@@ -153,6 +163,7 @@
   <p>© 2026 남천중학교 영어과 예상기출문제 | 본 자료는 학습 목적으로만 사용하십시오.</p>
 </footer>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="/static/script.js"></script>
 </body>
 </html>

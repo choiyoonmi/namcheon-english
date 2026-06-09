@@ -1,19 +1,82 @@
 let currentGrade = "2";
+let currentTerm = "1";
+let currentExamType = "중간";
 let currentRound = 1;
 let answersVisible = false;
 let questionsData = [];
+let extractedPdfText = "";
+
+// PDF.js 초기화
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
 // 페이지 로드 시 AI 섹션 표시
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("aiSection").style.display = "block";
+
+  // PDF 파일 입력 이벤트
+  document.getElementById("pdfFile").addEventListener("change", handlePdfUpload);
 });
 
-// Button selection
-document.querySelectorAll(".grade-btn").forEach(btn => {
+// 시험 선택 버튼
+document.querySelectorAll(".exam-btn").forEach(btn => {
   btn.addEventListener("click", () => {
-    document.querySelectorAll(".grade-btn").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".exam-btn").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     currentGrade = btn.dataset.grade;
+    currentTerm = btn.dataset.term;
+    currentExamType = btn.dataset.type;
+  });
+});
+
+// PDF 파일 업로드 처리
+async function handlePdfUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const fileName = document.getElementById("fileName");
+  const fileProgress = document.getElementById("fileProgress");
+  const fileStatus = document.getElementById("fileStatus");
+  const generateBtn = document.getElementById("generateBtn");
+
+  fileName.textContent = "처리 중: " + file.name;
+  fileProgress.style.display = "block";
+  generateBtn.disabled = true;
+
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+    let text = "";
+    const totalPages = pdf.numPages;
+
+    for (let i = 1; i <= totalPages; i++) {
+      fileStatus.textContent = `처리 중... (${i}/${totalPages} 페이지)`;
+      document.getElementById("fileProgressBar").style.width = ((i / totalPages) * 100) + "%";
+
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+      text += textContent.items.map(item => item.str).join(" ") + "\n";
+    }
+
+    extractedPdfText = text;
+    fileName.textContent = "✅ " + file.name + " (" + totalPages + " 페이지 처리 완료)";
+    fileProgress.style.display = "none";
+    generateBtn.disabled = false;
+  } catch (error) {
+    console.error("PDF 처리 오류:", error);
+    fileName.textContent = "❌ 파일 처리 실패";
+    fileProgress.style.display = "none";
+    generateBtn.disabled = false;
+    showAiError("PDF 파일을 읽을 수 없습니다. 올바른 PDF 파일인지 확인해주세요.");
+  }
+}
+
+// Button selection
+document.querySelectorAll(".round-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".round-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    currentRound = parseInt(btn.dataset.round);
   });
 });
 
@@ -41,8 +104,10 @@ async function loadQuestions() {
 
     const examHeader = document.getElementById("examHeader");
     examHeader.style.display = "block";
+
+    const examTypeLabel = currentExamType === "중간" ? "중간고사" : "기말고사";
     document.getElementById("examTitle").textContent =
-      `2026학년도 1학기 중간고사 ${currentGrade}학년 영어과 예상문제`;
+      `2026학년도 1학기 ${examTypeLabel} ${currentGrade}학년 영어과 예상문제`;
     document.getElementById("examSubtitle").textContent =
       `제${currentRound}회차`;
 
@@ -163,15 +228,13 @@ function escHtml(str) {
 // ===== AI 문제 생성 =====
 
 async function generateQuestions() {
-  const pdfText = document.getElementById("pdfText").value.trim();
-  const grade = document.getElementById("aiGrade").value;
-  const difficulty = document.getElementById("aiDifficulty").value;
-  const rounds = parseInt(document.getElementById("aiRounds").value);
-
-  if (!pdfText) {
-    showAiError("교과서 텍스트를 입력해주세요.");
+  if (!extractedPdfText) {
+    showAiError("PDF 파일을 선택해주세요.");
     return;
   }
+
+  const difficulty = document.getElementById("aiDifficulty").value;
+  const rounds = parseInt(document.getElementById("aiRounds").value);
 
   showAiLoading();
 
@@ -180,8 +243,8 @@ async function generateQuestions() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        pdfText: pdfText,
-        grade: grade,
+        pdfText: extractedPdfText,
+        grade: currentGrade,
         rounds: rounds,
         difficulty: difficulty
       })
@@ -194,7 +257,7 @@ async function generateQuestions() {
     }
 
     const result = await response.json();
-    renderAiQuestions(result.data, grade, rounds, difficulty);
+    renderAiQuestions(result.data, currentGrade, rounds, difficulty);
     showAiResult();
   } catch (e) {
     showAiError("요청 중 오류가 발생했습니다: " + e.message);
@@ -204,6 +267,15 @@ async function generateQuestions() {
 function renderAiQuestions(data, grade, rounds, difficulty) {
   const wrap = document.getElementById("questionsWrap");
   wrap.innerHTML = "";
+
+  // AI 생성 문제 헤더
+  const examHeader = document.getElementById("examHeader");
+  examHeader.style.display = "block";
+  const examTypeLabel = currentExamType === "중간" ? "중간고사" : "기말고사";
+  document.getElementById("examTitle").textContent =
+    `2026학년도 1학기 ${examTypeLabel} ${currentGrade}학년 영어과 예상문제 (AI 생성)`;
+  document.getElementById("examSubtitle").textContent =
+    `난이도: ${difficulty} / 총 ${rounds}회차`;
 
   let questionNum = 1;
 
