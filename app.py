@@ -171,6 +171,10 @@ def analyze_pdf_with_vision(pdf_base64_array, grade, round_num, difficulty, sele
         if not pdf_base64_array:
             return jsonify({"error": "Image data required"}), 400
 
+        # 이미지 개수 제한 (너무 많으면 API 제한)
+        if len(pdf_base64_array) > 3:
+            pdf_base64_array = pdf_base64_array[:3]
+
         prompt = f"""이 사진들은 중학교 {grade}학년 영어 기출문제입니다.
 
 JSON 형식으로만 응답하세요. 마크다운이나 설명은 하지 마세요.
