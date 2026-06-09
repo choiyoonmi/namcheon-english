@@ -28,6 +28,138 @@ document.querySelectorAll(".exam-btn").forEach(btn => {
   });
 });
 
+// ===== 기출문제 분석 =====
+
+let extractedExamPdfText = "";
+
+document.getElementById("examPdfFile")?.addEventListener("change", handleExamPdfUpload);
+
+async function handleExamPdfUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const fileName = document.getElementById("examFileName");
+  const fileProgress = document.getElementById("examFileProgress");
+  const fileStatus = document.getElementById("examFileStatus");
+  const analyzeBtn = document.getElementById("analyzeBtn");
+
+  fileName.textContent = "처리 중: " + file.name;
+  fileProgress.style.display = "block";
+  analyzeBtn.disabled = true;
+
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+    let text = "";
+    const totalPages = pdf.numPages;
+
+    for (let i = 1; i <= totalPages; i++) {
+      fileStatus.textContent = `처리 중... (${i}/${totalPages} 페이지)`;
+      document.getElementById("examFileProgressBar").style.width = ((i / totalPages) * 100) + "%";
+
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+      text += textContent.items.map(item => item.str).join(" ") + "\n";
+    }
+
+    extractedExamPdfText = text;
+    fileName.textContent = "✅ " + file.name + " (" + totalPages + " 페이지 처리 완료)";
+    fileProgress.style.display = "none";
+    analyzeBtn.disabled = false;
+  } catch (error) {
+    console.error("PDF 처리 오류:", error);
+    fileName.textContent = "❌ 파일 처리 실패";
+    fileProgress.style.display = "none";
+    analyzeBtn.disabled = false;
+    showAnalysisError("PDF 파일을 읽을 수 없습니다. 올바른 PDF 파일인지 확인해주세요.");
+  }
+}
+
+async function analyzeExamPdf() {
+  if (!extractedExamPdfText) {
+    showAnalysisError("PDF 파일을 선택해주세요.");
+    return;
+  }
+
+  const grade = document.getElementById("analysisTarget").value;
+  const round = document.getElementById("analysisRound").value;
+  const difficulty = document.getElementById("analysisDifficulty").value;
+
+  showAnalysisLoading();
+
+  try {
+    const response = await fetch("/api/analyze-exam", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        pdfText: extractedExamPdfText,
+        grade: grade,
+        round: round,
+        difficulty: difficulty
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      showAnalysisError(error.error || "분석에 실패했습니다.");
+      return;
+    }
+
+    const result = await response.json();
+    displayAnalysisResult(result);
+    showAnalysisResult();
+  } catch (e) {
+    showAnalysisError("요청 중 오류가 발생했습니다: " + e.message);
+  }
+}
+
+function displayAnalysisResult(result) {
+  const output = document.getElementById("analysisOutput");
+  output.textContent = JSON.stringify(result, null, 2);
+}
+
+function copyAnalysisResult() {
+  const output = document.getElementById("analysisOutput").textContent;
+  navigator.clipboard.writeText(output).then(() => {
+    alert("결과가 클립보드에 복사되었습니다!\ngrade2_questions.py 또는 grade3_questions.py에 붙여넣으세요.");
+  }).catch(() => {
+    alert("복사 실패. 수동으로 텍스트를 선택해서 복사해주세요.");
+  });
+}
+
+function resetAnalysis() {
+  extractedExamPdfText = "";
+  document.getElementById("examPdfFile").value = "";
+  document.getElementById("examFileName").textContent = "선택된 파일 없음";
+  document.getElementById("examFileProgress").style.display = "none";
+  document.getElementById("analysisLoading").style.display = "none";
+  document.getElementById("analysisResult").style.display = "none";
+  document.getElementById("analysisError").style.display = "none";
+  document.getElementById("analysisSection").scrollIntoView({ behavior: "smooth" });
+}
+
+function showAnalysisLoading() {
+  document.getElementById("analysisLoading").style.display = "block";
+  document.getElementById("analysisResult").style.display = "none";
+  document.getElementById("analysisError").style.display = "none";
+}
+
+function showAnalysisResult() {
+  document.getElementById("analysisLoading").style.display = "none";
+  document.getElementById("analysisResult").style.display = "block";
+  document.getElementById("analysisError").style.display = "none";
+}
+
+function showAnalysisError(message) {
+  document.getElementById("analysisLoading").style.display = "none";
+  document.getElementById("analysisResult").style.display = "none";
+  document.getElementById("analysisError").style.display = "block";
+  document.getElementById("analysisErrorText").textContent = message;
+}
+
+// ===== AI 문제 생성 =====
+
 // PDF 파일 업로드 처리
 async function handlePdfUpload(event) {
   const file = event.target.files[0];

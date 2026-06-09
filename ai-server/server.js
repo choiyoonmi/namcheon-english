@@ -254,6 +254,83 @@ app.post('/api/generate-batch', async (req, res) => {
   }
 });
 
+// Analyze exam PDF and generate essay questions
+app.post('/api/analyze-exam', async (req, res) => {
+  try {
+    const { pdfText, grade = '2', round = '1', difficulty = '보통' } = req.body;
+
+    if (!pdfText) {
+      return res.status(400).json({ error: 'PDF text is required' });
+    }
+
+    const analyzePrompt = `다음 기출문제를 분석하고, 회차별로 필수 유형에 맞춰 서술형 5문항을 생성하세요.
+
+[기출문제 텍스트]
+${pdfText.substring(0, 5000)}
+
+[생성 요구사항]
+학년: ${grade}학년
+회차: ${round}회차
+난이도: ${difficulty}
+
+[필수 서술형 유형 (5문항)]
+1. 관용표현 또는 핵심 표현 영작 (3점) - 1문항
+2. 조건영작 (조건 3개 이상) (4점) - 1문항
+3. to부정사/수량표현 활용 (3점) - 1문항
+4. 복합조건 영작 (4점) - 2문항
+
+[출력 형식]
+다음 Python 리스트 형태로만 응답. 마크다운 블록 금지.
+[
+  {
+    "id": 번호,
+    "round": ${round},
+    "type": "essay",
+    "question": "문제 내용",
+    "answer": "표준 정답",
+    "points": 점수,
+    "explanation": "해설",
+    "conditions": ["조건1", "조건2"],
+    "topic": "유형"
+  }
+]
+
+지금 시작하세요:`;
+
+    const message = await anthropic.messages.create({
+      model: 'claude-opus-4-8',
+      max_tokens: 4000,
+      system: '너는 한국 중학교 영어 시험 출제 전문가다. 기출문제를 분석해서 필수 유형의 서술형 문제를 생성한다.',
+      messages: [{ role: 'user', content: analyzePrompt }]
+    });
+
+    const responseText = message.content[0].type === 'text' ? message.content[0].text : '';
+
+    let cleanText = responseText.trim();
+    if (cleanText.startsWith('```python')) {
+      cleanText = cleanText.replace(/^```python\n?/, '').replace(/\n?```$/, '');
+    } else if (cleanText.startsWith('```json')) {
+      cleanText = cleanText.replace(/^```json\n?/, '').replace(/\n?```$/, '');
+    } else if (cleanText.startsWith('```')) {
+      cleanText = cleanText.replace(/^```\n?/, '').replace(/\n?```$/, '');
+    }
+
+    const parsedResult = JSON.parse(cleanText);
+
+    res.json({
+      success: true,
+      grade: grade,
+      round: round,
+      difficulty: difficulty,
+      questions: parsedResult,
+      code: `GRADE${grade}_QUESTIONS = [\n    # ===== ROUND ${round} (서술형) =====\n    ${JSON.stringify(parsedResult, null, 4)}\n]`
+    });
+  } catch (error) {
+    console.error('Analyze Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/api/check-auth', (req, res) => {
   const hasKey = !!process.env.ANTHROPIC_API_KEY;
   res.json({

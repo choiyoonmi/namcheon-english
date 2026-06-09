@@ -112,6 +112,38 @@ def ai_generate_batch():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route("/api/analyze-exam", methods=["POST"])
+def analyze_exam():
+    try:
+        data = request.json
+        pdf_text = data.get("pdfText", "").strip()
+        grade = data.get("grade", "2")
+        round_num = data.get("round", "1")
+        difficulty = data.get("difficulty", "보통")
+
+        if not pdf_text:
+            return jsonify({"error": "PDF text required"}), 400
+
+        response = requests.post(
+            f"{AI_SERVER_URL}/api/analyze-exam",
+            json={
+                "pdfText": pdf_text,
+                "grade": grade,
+                "round": round_num,
+                "difficulty": difficulty
+            },
+            timeout=180
+        )
+        response.raise_for_status()
+        return jsonify(response.json())
+
+    except requests.ConnectionError:
+        return jsonify({"error": "AI Server not available"}), 503
+    except requests.Timeout:
+        return jsonify({"error": "AI Server timeout"}), 504
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route("/api/ai/health")
 def ai_health():
     try:
