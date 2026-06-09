@@ -112,6 +112,7 @@ async function loadQuestions() {
       `제${currentRound}회차`;
 
     document.getElementById("toggleAnswerBtn").style.display = "inline-flex";
+    document.getElementById("resetBtn").style.display = "inline-flex";
     updateAnswerBtn();
   } catch (e) {
     document.getElementById("questionsWrap").innerHTML =
@@ -119,6 +120,17 @@ async function loadQuestions() {
   } finally {
     document.getElementById("loading").style.display = "none";
   }
+}
+
+function resetQuestions() {
+  // 초기 상태로 복구
+  document.getElementById("emptyState").style.display = "block";
+  document.getElementById("questionsWrap").innerHTML = "";
+  document.getElementById("answerSheet").style.display = "none";
+  document.getElementById("examHeader").style.display = "none";
+  document.getElementById("toggleAnswerBtn").style.display = "none";
+  document.getElementById("resetBtn").style.display = "none";
+  answersVisible = false;
 }
 
 function renderQuestions(questions) {
