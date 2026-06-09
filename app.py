@@ -2,10 +2,15 @@ from flask import Flask, render_template, jsonify, request
 import random
 import os
 import requests
+import base64
+import anthropic
 from data.grade2_questions import GRADE2_QUESTIONS
 from data.grade3_questions import GRADE3_QUESTIONS
 
 app = Flask(__name__)
+
+# Anthropic 클라이언트 초기화
+anthropic_client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
 
 QUESTIONS = {
     "2": GRADE2_QUESTIONS,
@@ -117,13 +122,20 @@ def analyze_exam():
     try:
         data = request.json
         pdf_text = data.get("pdfText", "").strip()
+        pdf_base64 = data.get("pdfBase64", "")
         grade = data.get("grade", "2")
         round_num = data.get("round", "1")
         difficulty = data.get("difficulty", "보통")
 
-        if not pdf_text:
-            return jsonify({"error": "PDF text required"}), 400
+        # PDF가 이미지 기반이거나 텍스트가 짧으면 Claude Vision으로 분석
+        if not pdf_text or len(pdf_text) < 200:
+            if not pdf_base64:
+                return jsonify({"error": "PDF data required"}), 400
 
+            # Claude Vision으로 PDF 분석
+            return analyze_pdf_with_vision(pdf_base64, grade, round_num, difficulty)
+
+        # PDF 텍스트가 충분하면 AI 서버로 전송
         response = requests.post(
             f"{AI_SERVER_URL}/api/analyze-exam",
             json={
@@ -143,6 +155,85 @@ def analyze_exam():
         return jsonify({"error": "AI Server timeout"}), 504
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+def analyze_pdf_with_vision(pdf_base64, grade, round_num, difficulty):
+    """Claude Vision API를 사용해서 PDF 이미지 분석"""
+    try:
+        prompt = f"""이 PDF는 중학교 {grade}학년 영어 기출문제입니다.
+
+회차 {round_num}의 필수 서술형 5문항을 생성해주세요.
+
+[필수 유형]
+1. 관용표현 영작 (3점)
+2. 조건영작 - 조건 3개 (4점)
+3. to부정사/수량 (3점)
+4. 복합조건 (4점) x2
+
+[응답 형식]
+순수 JSON만 (마크다운 블록 없음):
+{{
+  "grade": "{grade}",
+  "round": "{round_num}",
+  "difficulty": "{difficulty}",
+  "questions": [
+    {{
+      "id": 번호,
+      "type": "essay",
+      "question": "문제",
+      "answer": "정답",
+      "points": 점수,
+      "explanation": "해설",
+      "topic": "유형"
+    }}
+  ]
+}}"""
+
+        message = anthropic_client.messages.create(
+            model="claude-opus-4-8",
+            max_tokens=4000,
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": "application/pdf",
+                                "data": pdf_base64
+                            }
+                        },
+                        {
+                            "type": "text",
+                            "text": prompt
+                        }
+                    ]
+                }
+            ]
+        )
+
+        response_text = message.content[0].text
+
+        # JSON 파싱 및 정리
+        import json
+        result = json.loads(response_text)
+
+        return jsonify({
+            "success": True,
+            "grade": grade,
+            "round": round_num,
+            "difficulty": difficulty,
+            "questions": result.get("questions", []),
+            "message": "Claude Vision으로 PDF 분석 완료"
+        })
+
+    except json.JSONDecodeError:
+        return jsonify({
+            "error": "JSON parsing failed",
+            "raw_response": response_text[:500]
+        }), 500
+    except Exception as e:
+        return jsonify({"error": f"Vision analysis failed: {str(e)}"}), 500
 
 @app.route("/api/ai/health")
 def ai_health():

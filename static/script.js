@@ -83,7 +83,9 @@ async function handleExamPdfUpload(event) {
 }
 
 async function analyzeExamPdf() {
-  if (!extractedExamPdfText) {
+  const examPdfFile = document.getElementById("examPdfFile");
+
+  if (!examPdfFile.files[0]) {
     showAnalysisError("PDF 파일을 선택해주세요.");
     return;
   }
@@ -95,11 +97,22 @@ async function analyzeExamPdf() {
   showAnalysisLoading();
 
   try {
+    // PDF 파일을 Base64로 변환
+    const file = examPdfFile.files[0];
+    const arrayBuffer = await file.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
+    let binary = '';
+    for (let i = 0; i < uint8Array.length; i++) {
+      binary += String.fromCharCode(uint8Array[i]);
+    }
+    const pdfBase64 = btoa(binary);
+
     const response = await fetch("/api/analyze-exam", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         pdfText: extractedExamPdfText,
+        pdfBase64: pdfBase64,
         grade: grade,
         round: round,
         difficulty: difficulty
