@@ -123,32 +123,31 @@ def analyze_exam():
     try:
         data = request.json
         pdf_text = data.get("pdfText", "").strip()
-        pdf_base64 = data.get("pdfBase64", "")
+        pdf_base64_array = data.get("pdfBase64Array", [])
         grade = data.get("grade", "2")
         round_num = data.get("round", "1")
         difficulty = data.get("difficulty", "보통")
 
-        # PDF가 이미지 기반이거나 텍스트가 짧으면 Claude Vision으로 분석
-        if not pdf_text or len(pdf_text) < 200:
-            if not pdf_base64:
-                return jsonify({"error": "PDF data required"}), 400
-
-            # Claude Vision으로 PDF 분석
-            return analyze_pdf_with_vision(pdf_base64, grade, round_num, difficulty)
+        # 여러 이미지 또는 단일 이미지를 Claude Vision으로 분석
+        if pdf_base64_array:
+            return analyze_pdf_with_vision(pdf_base64_array, grade, round_num, difficulty)
 
         # PDF 텍스트가 충분하면 AI 서버로 전송
-        response = requests.post(
-            f"{AI_SERVER_URL}/api/analyze-exam",
-            json={
-                "pdfText": pdf_text,
-                "grade": grade,
-                "round": round_num,
-                "difficulty": difficulty
-            },
-            timeout=180
-        )
-        response.raise_for_status()
-        return jsonify(response.json())
+        if pdf_text and len(pdf_text) >= 200:
+            response = requests.post(
+                f"{AI_SERVER_URL}/api/analyze-exam",
+                json={
+                    "pdfText": pdf_text,
+                    "grade": grade,
+                    "round": round_num,
+                    "difficulty": difficulty
+                },
+                timeout=180
+            )
+            response.raise_for_status()
+            return jsonify(response.json())
+
+        return jsonify({"error": "PDF data required"}), 400
 
     except requests.ConnectionError:
         return jsonify({"error": "AI Server not available"}), 503
@@ -157,12 +156,16 @@ def analyze_exam():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-def analyze_pdf_with_vision(pdf_base64, grade, round_num, difficulty):
-    """Claude Vision API를 사용해서 이미지 분석"""
+def analyze_pdf_with_vision(pdf_base64_array, grade, round_num, difficulty):
+    """Claude Vision API를 사용해서 여러 이미지 분석"""
     try:
         if not anthropic_client:
             return jsonify({"error": "API Key not configured"}), 500
-        prompt = f"""이 사진은 중학교 {grade}학년 영어 기출문제입니다.
+
+        if not pdf_base64_array:
+            return jsonify({"error": "Image data required"}), 400
+
+        prompt = f"""이 사진들은 중학교 {grade}학년 영어 기출문제입니다. (여러 페이지일 수 있습니다)
 
 회차 {round_num}의 필수 서술형 5문항을 생성해주세요.
 
@@ -191,26 +194,31 @@ def analyze_pdf_with_vision(pdf_base64, grade, round_num, difficulty):
   ]
 }}"""
 
+        # 모든 이미지를 메시지 content에 추가
+        content = []
+        for base64_data in pdf_base64_array:
+            content.append({
+                "type": "image",
+                "source": {
+                    "type": "base64",
+                    "media_type": "image/jpeg",
+                    "data": base64_data
+                }
+            })
+
+        # 마지막에 프롬프트 추가
+        content.append({
+            "type": "text",
+            "text": prompt
+        })
+
         message = anthropic_client.messages.create(
             model="claude-opus-4-8",
             max_tokens=4000,
             messages=[
                 {
                     "role": "user",
-                    "content": [
-                        {
-                            "type": "image",
-                            "source": {
-                                "type": "base64",
-                                "media_type": "image/jpeg",
-                                "data": pdf_base64
-                            }
-                        },
-                        {
-                            "type": "text",
-                            "text": prompt
-                        }
-                    ]
+                    "content": content
                 }
             ]
         )
@@ -227,13 +235,13 @@ def analyze_pdf_with_vision(pdf_base64, grade, round_num, difficulty):
             "round": round_num,
             "difficulty": difficulty,
             "questions": result.get("questions", []),
-            "message": "Claude Vision으로 PDF 분석 완료"
+            "message": f"Claude Vision으로 {len(pdf_base64_array)}개 이미지 분석 완료"
         })
 
     except json.JSONDecodeError:
         return jsonify({
             "error": "JSON parsing failed",
-            "raw_response": response_text[:500]
+            "raw_response": response_text[:500] if 'response_text' in locals() else "No response"
         }), 500
     except Exception as e:
         return jsonify({"error": f"Vision analysis failed: {str(e)}"}), 500

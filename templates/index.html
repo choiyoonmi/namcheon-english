@@ -94,7 +94,7 @@
         <div class="form-group">
           <label>기출문제 사진 (JPG, PNG 또는 드래그 드롭)</label>
           <div id="dragDropZone" class="drag-drop-zone">
-            <input type="file" id="examPdfFile" accept="image/*" style="display:none;">
+            <input type="file" id="examPdfFile" accept="image/*" multiple style="display:none;">
             <div style="text-align: center; padding: 40px 20px;">
               <div style="font-size: 48px; margin-bottom: 16px;">📸</div>
               <p style="font-size: 16px; font-weight: 600; color: #667eea; margin-bottom: 8px;">
@@ -107,10 +107,10 @@
                 📁 파일 선택
               </button>
               <p style="font-size: 12px; color: #999; margin-top: 12px;">
-                JPG, PNG 이미지 (최대 20MB)
+                여러 사진 한 번에 업로드 가능 (JPG, PNG)
               </p>
             </div>
-            <span id="examFileName" style="display: none; margin: 16px 0; color: #667eea; font-weight: 600;"></span>
+            <div id="examFileName" style="display: none; margin: 16px 0; padding: 12px; background: #f0f2ff; border-radius: 6px; color: #667eea; font-weight: 600; font-size: 13px;"></div>
           </div>
           <div id="examFileProgress" style="display:none; margin-top: 8px;">
             <div style="background: #ddd; height: 4px; border-radius: 2px;">

@@ -31,6 +31,7 @@ document.querySelectorAll(".exam-btn").forEach(btn => {
 // ===== 기출문제 분석 =====
 
 let extractedExamPdfText = "";
+let examImageFiles = []; // 여러 이미지 저장
 
 document.getElementById("examPdfFile")?.addEventListener("change", handleExamPdfUpload);
 
@@ -67,58 +68,32 @@ if (dragDropZone) {
 }
 
 async function handleExamPdfUpload(event) {
-  const file = event.target.files[0];
-  if (!file) return;
+  const files = event.target.files;
+  if (!files || files.length === 0) return;
 
   const fileName = document.getElementById("examFileName");
   const fileProgress = document.getElementById("examFileProgress");
   const fileStatus = document.getElementById("examFileStatus");
   const analyzeBtn = document.getElementById("analyzeBtn");
 
-  fileName.textContent = "처리 중: " + file.name;
+  examImageFiles = Array.from(files);
+  const fileNames = examImageFiles.map(f => f.name).join(", ");
+
+  fileName.textContent = `준비 중: ${examImageFiles.length}개 파일`;
+  fileName.style.display = "block";
   fileProgress.style.display = "block";
-  analyzeBtn.disabled = true;
+  analyzeBtn.disabled = false; // 여러 이미지는 즉시 분석 가능
 
-  try {
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  fileStatus.textContent = `${examImageFiles.length}개 파일 준비 완료`;
+  document.getElementById("examFileProgressBar").style.width = "100%";
 
-    let text = "";
-    const totalPages = pdf.numPages;
-
-    for (let i = 1; i <= totalPages; i++) {
-      fileStatus.textContent = `처리 중... (${i}/${totalPages} 페이지)`;
-      document.getElementById("examFileProgressBar").style.width = ((i / totalPages) * 100) + "%";
-
-      const page = await pdf.getPage(i);
-      const textContent = await page.getTextContent();
-      text += textContent.items.map(item => item.str).join(" ") + "\n";
-    }
-
-    extractedExamPdfText = text;
-    console.log("추출된 텍스트 길이:", text.length);
-    fileName.textContent = "✅ " + file.name + " (" + totalPages + " 페이지 처리 완료 / " + text.length + " 문자)";
-    fileProgress.style.display = "none";
-    analyzeBtn.disabled = false;
-
-    // 텍스트가 너무 짧으면 경고
-    if (text.length < 500) {
-      console.warn("경고: 추출된 텍스트가 너무 짧습니다. PDF가 이미지 기반일 수 있습니다.");
-    }
-  } catch (error) {
-    console.error("PDF 처리 오류:", error);
-    fileName.textContent = "❌ 파일 처리 실패";
-    fileProgress.style.display = "none";
-    analyzeBtn.disabled = false;
-    showAnalysisError("PDF 파일을 읽을 수 없습니다. 올바른 PDF 파일인지 확인해주세요.");
-  }
+  fileName.textContent = `✅ ${examImageFiles.length}개 파일 준비 완료`;
+  fileProgress.style.display = "none";
 }
 
 async function analyzeExamPdf() {
-  const examPdfFile = document.getElementById("examPdfFile");
-
-  if (!examPdfFile.files[0]) {
-    showAnalysisError("PDF 파일을 선택해주세요.");
+  if (!examImageFiles || examImageFiles.length === 0) {
+    showAnalysisError("사진 파일을 선택해주세요.");
     return;
   }
 
@@ -129,22 +104,25 @@ async function analyzeExamPdf() {
   showAnalysisLoading();
 
   try {
-    // PDF 파일을 Base64로 변환
-    const file = examPdfFile.files[0];
-    const arrayBuffer = await file.arrayBuffer();
-    const uint8Array = new Uint8Array(arrayBuffer);
-    let binary = '';
-    for (let i = 0; i < uint8Array.length; i++) {
-      binary += String.fromCharCode(uint8Array[i]);
+    // 모든 파일을 Base64로 변환
+    const imageBase64Array = [];
+    for (let i = 0; i < examImageFiles.length; i++) {
+      const file = examImageFiles[i];
+      const arrayBuffer = await file.arrayBuffer();
+      const uint8Array = new Uint8Array(arrayBuffer);
+      let binary = '';
+      for (let j = 0; j < uint8Array.length; j++) {
+        binary += String.fromCharCode(uint8Array[j]);
+      }
+      imageBase64Array.push(btoa(binary));
     }
-    const pdfBase64 = btoa(binary);
 
     const response = await fetch("/api/analyze-exam", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         pdfText: extractedExamPdfText,
-        pdfBase64: pdfBase64,
+        pdfBase64Array: imageBase64Array, // 여러 이미지 배열
         grade: grade,
         round: round,
         difficulty: difficulty
