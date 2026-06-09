@@ -34,6 +34,38 @@ let extractedExamPdfText = "";
 
 document.getElementById("examPdfFile")?.addEventListener("change", handleExamPdfUpload);
 
+// 드래그 드롭 처리
+const dragDropZone = document.getElementById("dragDropZone");
+
+if (dragDropZone) {
+  // 드래그 오버
+  dragDropZone.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    dragDropZone.classList.add("drag-over");
+  });
+
+  dragDropZone.addEventListener("dragleave", () => {
+    dragDropZone.classList.remove("drag-over");
+  });
+
+  // 드롭
+  dragDropZone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dragDropZone.classList.remove("drag-over");
+
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      document.getElementById("examPdfFile").files = files;
+      handleExamPdfUpload({ target: { files: files } });
+    }
+  });
+
+  // 클릭으로도 파일 선택 가능
+  dragDropZone.addEventListener("click", () => {
+    document.getElementById("examPdfFile").click();
+  });
+}
+
 async function handleExamPdfUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
