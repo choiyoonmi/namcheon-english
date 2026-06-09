@@ -179,17 +179,25 @@ def analyze_pdf_with_vision(pdf_base64_array, grade, round_num, difficulty, sele
 
 JSON 형식으로만 응답하세요. 마크다운이나 설명은 하지 마세요.
 
-선택 문제 {select_count}개 + 서술형 5문제를 생성하세요.
+총 {select_count + 5}개 문제를 생성하세요:
+- 선택 문제(객관식): {select_count}개 (각 4지선다, 점수 3점)
+- 서술형 문제: 5개 (점수 3~4점)
 
-응답 형식 (JSON만):
+각 선택 문제는 4개 선택지를 가져야 합니다.
+각 서술형 문제는 정답과 해설을 포함해야 합니다.
+
+응답은 JSON만 (마크다운 블록 없음):
 {{
   "grade": "{grade}",
   "round": "{round_num}",
   "difficulty": "{difficulty}",
   "questions": [
-    {{"id": 1, "type": "mc", "question": "선택문제1", "options": ["①", "②", "③", "④"], "answer": 1, "points": 3, "topic": "어휘"}},
-    {{"id": 2, "type": "mc", "question": "선택문제2", "options": ["①", "②", "③", "④"], "answer": 2, "points": 3, "topic": "문법"}},
-    {{"id": {select_count + 1}, "type": "essay", "question": "서술형1", "answer": "정답", "points": 3, "explanation": "해설", "topic": "관용표현"}}
+    {{"id": 1, "type": "mc", "question": "선택문제1내용", "options": ["①선택지1", "②선택지2", "③선택지3", "④선택지4"], "answer": 1, "points": 3, "topic": "어휘"}},
+    {{"id": 2, "type": "mc", "question": "선택문제2내용", "options": ["①선택지1", "②선택지2", "③선택지3", "④선택지4"], "answer": 2, "points": 3, "topic": "문법"}},
+    ...{select_count}개의 선택 문제...,
+    {{"id": {select_count + 1}, "type": "essay", "question": "서술형1내용", "answer": "정답텍스트", "points": 3, "explanation": "해설", "topic": "관용표현"}},
+    {{"id": {select_count + 2}, "type": "essay", "question": "서술형2내용", "answer": "정답텍스트", "points": 3, "explanation": "해설", "topic": "문법"}},
+    ...5개의 서술형 문제...
   ]
 }}"""
 
