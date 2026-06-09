@@ -1,0 +1,16 @@
+{
+  "name": "namcheon-ai-server",
+  "version": "1.0.0",
+  "description": "AI-based exam question generation for Namcheon Middle School English",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "NODE_ENV=development node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "@anthropic-ai/sdk": "^0.12.0"
+  }
+}
