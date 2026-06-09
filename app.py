@@ -10,7 +10,8 @@ from data.grade3_questions import GRADE3_QUESTIONS
 app = Flask(__name__)
 
 # Anthropic 클라이언트 초기화
-anthropic_client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+api_key = os.environ.get("ANTHROPIC_API_KEY")
+anthropic_client = anthropic.Anthropic(api_key=api_key) if api_key else None
 
 QUESTIONS = {
     "2": GRADE2_QUESTIONS,
@@ -159,6 +160,8 @@ def analyze_exam():
 def analyze_pdf_with_vision(pdf_base64, grade, round_num, difficulty):
     """Claude Vision API를 사용해서 PDF 이미지 분석"""
     try:
+        if not anthropic_client:
+            return jsonify({"error": "API Key not configured"}), 500
         prompt = f"""이 PDF는 중학교 {grade}학년 영어 기출문제입니다.
 
 회차 {round_num}의 필수 서술형 5문항을 생성해주세요.
