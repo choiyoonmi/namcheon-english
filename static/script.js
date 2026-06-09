@@ -103,39 +103,34 @@ async function analyzeExamPdf() {
   const difficulty = document.getElementById("analysisDifficulty").value;
 
   showAnalysisLoading();
+  document.getElementById("analysisLoading").textContent = "OCR 처리 중입니다... (1-2분 소요)";
 
   try {
-    // 모든 파일을 Base64로 변환 (파일 타입 포함)
-    const imageBase64Array = [];
-    for (let i = 0; i < examImageFiles.length; i++) {
+    // OCR로 텍스트 추출
+    let extractedText = "";
+
+    for (let i = 0; i < Math.min(examImageFiles.length, 2); i++) {
       const file = examImageFiles[i];
-      const arrayBuffer = await file.arrayBuffer();
-      const uint8Array = new Uint8Array(arrayBuffer);
-      let binary = '';
-      for (let j = 0; j < uint8Array.length; j++) {
-        binary += String.fromCharCode(uint8Array[j]);
-      }
-      const base64 = btoa(binary);
-
-      // 파일 형식 감지 (확장자로)
-      const mediaType = file.name.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
-
-      imageBase64Array.push({
-        base64: base64,
-        mediaType: mediaType
-      });
+      const result = await Tesseract.recognize(file);
+      extractedText += result.data.text + "\n";
     }
 
-    const response = await fetch("/api/analyze-exam", {
+    if (!extractedText.trim()) {
+      showAnalysisError("이미지에서 텍스트를 추출할 수 없습니다.");
+      return;
+    }
+
+    // Node.js AI 서버로 전송
+    const response = await fetch("/api/ai/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        pdfText: extractedExamPdfText,
-        images: imageBase64Array, // 여러 이미지 (형식 포함)
+        pdfText: extractedText,
         grade: grade,
         round: round,
-        selectCount: parseInt(selectCount), // 선택 문제 개수
-        difficulty: difficulty
+        difficulty: difficulty,
+        usedIdioms: [],
+        usedTypes: []
       })
     });
 
