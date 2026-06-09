@@ -134,9 +134,25 @@ def analyze_exam():
         difficulty = data.get("difficulty", "보통")
         select_count = data.get("selectCount", 5)
 
-        # 여러 이미지 또는 단일 이미지를 Claude Vision으로 분석
+        # 이미지가 있으면 Node.js AI 서버 사용
         if images or pdf_base64_array:
-            return analyze_pdf_with_vision(images or pdf_base64_array, grade, round_num, difficulty, select_count)
+            try:
+                response = requests.post(
+                    f"{AI_SERVER_URL}/api/analyze-exam",
+                    json={
+                        "imageBase64Array": images or pdf_base64_array,
+                        "grade": grade,
+                        "round": round_num,
+                        "selectCount": select_count,
+                        "difficulty": difficulty
+                    },
+                    timeout=180
+                )
+                response.raise_for_status()
+                return jsonify(response.json())
+            except requests.exceptions.RequestException:
+                # AI 서버 실패 시 Claude Vision으로 폴백
+                return analyze_pdf_with_vision(images or pdf_base64_array, grade, round_num, difficulty, select_count)
 
         # PDF 텍스트가 충분하면 AI 서버로 전송
         if pdf_text and len(pdf_text) >= 200:
